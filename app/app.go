@@ -49,6 +49,8 @@ func (a *App) Register(method string, path string, handler func() (*Response, er
 func (a *App) handle(request string) string {
 	r, err := parseRequest(request)
 	if err != nil {
+		// Recipients of an invalid request-line SHOULD respond with either a 400 (Bad Request) error or a 301 (Moved Permanently) redirect with the request-target properly encoded.
+		// @see https://datatracker.ietf.org/doc/html/rfc9112#section-3.2
 		return BAD_REQUEST.stringify()
 	}
 	if handler, exists := a.handlers[*r]; exists {

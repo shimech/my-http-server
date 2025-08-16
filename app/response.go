@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/shimech/my-http-server/common"
+	"github.com/shimech/my-http-server/util"
 )
 
 var (
@@ -26,5 +26,5 @@ func NewResponse(status int, message string) *Response {
 }
 
 func (r *Response) stringify() string {
-	return fmt.Sprintf("HTTP/1.1 %d %s%s%s", r.Status, r.Message, common.CRLF, common.CRLF)
+	return fmt.Sprintf("HTTP/1.1 %d %s%s%s", r.Status, r.Message, util.CRLF, util.CRLF)
 }
