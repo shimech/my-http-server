@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"net"
+	"os"
 )
 
 type Handler func(c Context) (*Response, error)
@@ -24,14 +25,19 @@ func (a *App) Start(port string) error {
 	}
 	defer l.Close()
 
-	c, err := l.Accept()
-	if err != nil {
-		return err
+	for {
+		c, err := l.Accept()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		go a.exec(c)
 	}
-	defer c.Close()
+}
 
+func (a *App) exec(c net.Conn) error {
 	request := make([]byte, 1024)
-	_, err = c.Read(request)
+	_, err := c.Read(request)
 	if err != nil {
 		return err
 	}
@@ -41,7 +47,7 @@ func (a *App) Start(port string) error {
 		return err
 	}
 
-	return nil
+	return c.Close()
 }
 
 func (a *App) Register(method string, path string, handler Handler) {
