@@ -9,7 +9,7 @@ import (
 
 type Request struct {
 	Method string
-	Path   string
+	Paths  []string
 }
 
 func parseRequest(request string) (*Request, error) {
@@ -22,8 +22,10 @@ func parseRequest(request string) (*Request, error) {
 	if len(parts) < 2 {
 		return nil, fmt.Errorf("invalid request")
 	}
+	method := parts[0]
+	path := parts[1]
 	return &Request{
-		Method: parts[0],
-		Path:   parts[1],
+		Method: method,
+		Paths:  parsePath(path),
 	}, nil
 }

@@ -5,13 +5,15 @@ import (
 	"net"
 )
 
+type Handler func(c Context) (*Response, error)
+
 type App struct {
-	handlers map[Request]func() (*Response, error)
+	handlers map[*Route]Handler
 }
 
 func New() *App {
 	return &App{
-		handlers: make(map[Request]func() (*Response, error)),
+		handlers: make(map[*Route]Handler),
 	}
 }
 
@@ -42,8 +44,8 @@ func (a *App) Start(port string) error {
 	return nil
 }
 
-func (a *App) Register(method string, path string, handler func() (*Response, error)) {
-	a.handlers[Request{Method: method, Path: path}] = handler
+func (a *App) Register(method string, path string, handler Handler) {
+	a.handlers[NewRoute(method, path)] = handler
 }
 
 func (a *App) handle(request string) string {
@@ -53,13 +55,24 @@ func (a *App) handle(request string) string {
 		// @see https://datatracker.ietf.org/doc/html/rfc9112#section-3.2
 		return BAD_REQUEST.stringify()
 	}
-	if handler, exists := a.handlers[*r]; exists {
-		response, err := handler()
-		if err != nil {
-			return INTERNAL_SERVER_ERROR.stringify()
-		}
-		return response.stringify()
-	} else {
+
+	handler, c, exists := a.findHandler(r)
+	if !exists {
 		return NOT_FOUND.stringify()
 	}
+
+	response, err := handler(*c)
+	if err != nil {
+		return INTERNAL_SERVER_ERROR.stringify()
+	}
+	return response.stringify()
+}
+
+func (a *App) findHandler(request *Request) (Handler, *Context, bool) {
+	for route, handler := range a.handlers {
+		if route.match(request) {
+			return handler, NewContext(route, request), true
+		}
+	}
+	return nil, nil, false
 }
